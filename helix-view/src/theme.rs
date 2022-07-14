@@ -103,6 +103,7 @@ pub struct Theme {
     // tree-sitter highlight styles are stored in a Vec to optimize lookups
     scopes: Vec<String>,
     highlights: Vec<Style>,
+    inherits_from: Option<String>,
 }
 
 impl<'de> Deserialize<'de> for Theme {
@@ -113,6 +114,7 @@ impl<'de> Deserialize<'de> for Theme {
         let mut styles = HashMap::new();
         let mut scopes = Vec::new();
         let mut highlights = Vec::new();
+        let mut inherits_from = None;
 
         if let Ok(mut colors) = HashMap::<String, Value>::deserialize(deserializer) {
             // TODO: alert user of parsing failures in editor
@@ -125,6 +127,11 @@ impl<'de> Deserialize<'de> for Theme {
                     })
                 })
                 .unwrap_or_default();
+
+            // replace to manually remove the added backslashes whcih come from the 'to_string' method
+            inherits_from = colors
+                .remove("inherits_from")
+                .map(|value| value.to_string().replace("\"", ""));
 
             styles.reserve(colors.len());
             scopes.reserve(colors.len());
@@ -147,6 +154,7 @@ impl<'de> Deserialize<'de> for Theme {
             scopes,
             styles,
             highlights,
+            inherits_from,
         })
     }
 }
